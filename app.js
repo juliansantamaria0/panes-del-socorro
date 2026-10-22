@@ -102,28 +102,32 @@ if ('IntersectionObserver' in window) {
   revelables.forEach((el) => el.classList.add('visible'));
 }
 
-// Video del local: se reproduce solo cuando está a la vista
-const video = document.getElementById('video-local');
-const botonPausa = document.querySelector('.video-local .pausa');
-let pausadoPorUsuario = reducirMovimiento;
-const ponerIcono = () => {
-  botonPausa.querySelector('span').textContent = video.paused ? 'play_arrow' : 'pause';
-  botonPausa.setAttribute('aria-label', video.paused ? 'Reproducir video' : 'Pausar video');
-};
-botonPausa.hidden = false;
-botonPausa.addEventListener('click', () => {
-  if (video.paused) { pausadoPorUsuario = false; video.play().catch(() => {}); }
-  else { pausadoPorUsuario = true; video.pause(); }
+// Videos de las sedes: cada uno se reproduce solo cuando está a la vista
+document.querySelectorAll('.video-local').forEach((contenedor) => {
+  const video = contenedor.querySelector('video');
+  const botonPausa = contenedor.querySelector('.pausa');
+  const sede = document.getElementById(video.closest('.sede').getAttribute('aria-labelledby')).textContent;
+  let pausadoPorUsuario = reducirMovimiento;
+  const ponerIcono = () => {
+    botonPausa.querySelector('span').textContent = video.paused ? 'play_arrow' : 'pause';
+    botonPausa.setAttribute('aria-label', `${video.paused ? 'Reproducir video' : 'Pausar video'}: ${sede}`);
+  };
+  video.controls = false;
+  botonPausa.hidden = false;
+  botonPausa.addEventListener('click', () => {
+    if (video.paused) { pausadoPorUsuario = false; video.play().catch(() => {}); }
+    else { pausadoPorUsuario = true; video.pause(); }
+  });
+  video.addEventListener('play', ponerIcono);
+  video.addEventListener('pause', ponerIcono);
+  ponerIcono();
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !pausadoPorUsuario) video.play().catch(() => {});
+      else if (!e.isIntersecting) video.pause();
+    }, { threshold: 0.4 }).observe(video);
+  }
 });
-video.addEventListener('play', ponerIcono);
-video.addEventListener('pause', ponerIcono);
-ponerIcono();
-if ('IntersectionObserver' in window) {
-  new IntersectionObserver(([e]) => {
-    if (e.isIntersecting && !pausadoPorUsuario) video.play().catch(() => {});
-    else if (!e.isIntersecting) video.pause();
-  }, { threshold: 0.4 }).observe(video);
-}
 
 // Formulario → WhatsApp
 const form = document.getElementById('form-pedido');
